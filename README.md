@@ -54,3 +54,8 @@ Mohammed Elzanaty
 
 
 Licensed under the MIT license.
+
+Acknowledment
+w3schools.com 
+Youtube Tutorial
+Github--Mengmei Tu https://github.com/mmeii/weather-dashboard
