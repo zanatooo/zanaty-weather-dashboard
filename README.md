@@ -1,6 +1,4 @@
 # zanaty-weather-dashboard
-License Badge Top Language
-
 This is a weather dashboard with form inputs that will run in the browser and feature dynamically updated HTML and CSS. It allows the user to search to view weather outlook for multiple cities so travelers can plan a trip accordingly.
 
 OpenWeather API is used to retrieve weather data for cities. And localStorage is used to store persistent data.
