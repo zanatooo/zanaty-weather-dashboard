@@ -16,44 +16,43 @@
 // WHEN I open the weather dashboard
 // THEN I am presented with the last searched city forecast
 
-var apiKey = "d1e2d0763204896fd894698f5c6e27ee";
+var apiKey = "934e6c4529de08696b330c26566ed4fd";
 var today = moment().format('L');
 var searchHistoryList = [];
 
 // function for current condition
-function currentCondition(city) {
+function currentForecast(city) {
 
     var queryURL = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`;
 
     $.ajax({
         url: queryURL,
         method: "GET"
-    }).then(function(cityWeatherResponse) {
+    }).then(function (cityWeatherResponse) {
         console.log(cityWeatherResponse);
-        
+
         $("#weatherContent").css("display", "block");
         $("#cityDetail").empty();
-        
+
         var iconCode = cityWeatherResponse.weather[0].icon;
         var iconURL = `https://openweathermap.org/img/w/${iconCode}.png`;
 
         // WHEN I view current weather conditions for that city
         // THEN I am presented with the city name
         // the date
-        // an icon representation of weather conditions
+        // an icon rpresentation of weather conditions
         // the temperature
         // the humidity
         // the wind speed
-        var currentCity = $(`
+        $('#cityDetail').html(`
             <h2 id="currentCity">
                 ${cityWeatherResponse.name} ${today} <img src="${iconURL}" alt="${cityWeatherResponse.weather[0].description}" />
             </h2>
             <p>Temperature: ${cityWeatherResponse.main.temp} °F</p>
             <p>Humidity: ${cityWeatherResponse.main.humidity}\%</p>
             <p>Wind Speed: ${cityWeatherResponse.wind.speed} MPH</p>
-        `);
+        `)
 
-        $("#cityDetail").append(currentCity);
 
         // UV index
         var lat = cityWeatherResponse.coord.lat;
@@ -63,7 +62,7 @@ function currentCondition(city) {
         $.ajax({
             url: uviQueryURL,
             method: "GET"
-        }).then(function(uviResponse) {
+        }).then(function (uviResponse) {
             console.log(uviResponse);
 
             var uvIndex = uviResponse.value;
@@ -75,7 +74,7 @@ function currentCondition(city) {
 
             $("#cityDetail").append(uvIndexP);
 
-            futureCondition(lat, lon);
+            futureCondition(lat, lon,city);
 
             // WHEN I view the UV index
             // THEN I am presented with a color that indicates whether the conditions are favorable, moderate, or severe
@@ -89,14 +88,14 @@ function currentCondition(city) {
             } else if (uvIndex >= 8 && uvIndex <= 10) {
                 $("#uvIndexColor").css("background-color", "#E53210").css("color", "white");
             } else {
-                $("#uvIndexColor").css("background-color", "#B567A4").css("color", "white"); 
-            };  
+                $("#uvIndexColor").css("background-color", "#B567A4").css("color", "white");
+            };
         });
     });
 }
 
 // function for future condition
-function futureCondition(lat, lon) {
+function futureCondition(lat, lon,city) {
 
     // THEN I am presented with a 5-day forecast
     var futureURL = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&units=imperial&exclude=current,minutely,hourly,alerts&appid=${apiKey}`;
@@ -104,10 +103,15 @@ function futureCondition(lat, lon) {
     $.ajax({
         url: futureURL,
         method: "GET"
-    }).then(function(futureResponse) {
+    }).then(function (futureResponse) {
         console.log(futureResponse);
         $("#fiveDay").empty();
-        
+        if (searchHistoryList.indexOf(city) == -1) {
+            
+            searchHistoryList.push(city);
+            localStorage.setItem("city", JSON.stringify(searchHistoryList));
+            previousSearch()
+        };
         for (let i = 1; i < 6; i++) {
             var cityInfo = {
                 date: futureResponse.daily[i].dt,
@@ -138,43 +142,47 @@ function futureCondition(lat, lon) {
 
             $("#fiveDay").append(futureCard);
         }
-    }); 
+    });
 }
 
 // add on click event listener 
-$("#searchBtn").on("click", function(event) {
+$("#searchBtn").on("click", function (event) {
     event.preventDefault();
 
     var city = $("#enterCity").val().trim();
-    currentCondition(city);
-    if (!searchHistoryList.includes(city)) {
-        searchHistoryList.push(city);
-        var searchedCity = $(`
-            <li class="list-group-item">${city}</li>
-            `);
-        $("#searchHistory").append(searchedCity);
-    };
-    
-    localStorage.setItem("city", JSON.stringify(searchHistoryList));
+    currentForecast(city);
+
+
+    //localStorage.setItem("city", JSON.stringify(searchHistoryList));
     console.log(searchHistoryList);
 });
 
 // WHEN I click on a city in the search history
 // THEN I am again presented with current and future conditions for that city
-$(document).on("click", ".list-group-item", function() {
+$(document).on("click", ".list-group-item", function () {
     var listCity = $(this).text();
-    currentCondition(listCity);
+    currentForecast(listCity);
 });
 
 // WHEN I open the weather dashboard
 // THEN I am presented with the last searched city forecast
-$(document).ready(function() {
+$(document).ready(function () {
+previousSearch()
+})
+    function previousSearch(){
+        $("#searchHistory").empty()
     var searchHistoryArr = JSON.parse(localStorage.getItem("city"));
 
     if (searchHistoryArr !== null) {
         var lastSearchedIndex = searchHistoryArr.length - 1;
         var lastSearchedCity = searchHistoryArr[lastSearchedIndex];
-        currentCondition(lastSearchedCity);
+        currentForecast(lastSearchedCity);
         console.log(`Last searched city: ${lastSearchedCity}`);
+        for(let i=0;i<searchHistoryArr.length;i++){
+            var searchedCity = `
+            <li class="list-group-item">${searchHistoryArr[i]}</li>
+            `;
+             $("#searchHistory").append(searchedCity);
+        }
     }
-});
+}
